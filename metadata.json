@@ -1,0 +1,6 @@
+{
+  "name": "Sesli Hava Durumu Alarmı",
+  "description": "Belirlenen gün ve saatte güncel konum hava durumunu sesli olarak raporlayan akıllı alarm sistemi (PWA).",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
