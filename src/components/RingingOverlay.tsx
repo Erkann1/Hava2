@@ -38,47 +38,9 @@ export default function RingingOverlay({
     return () => clearInterval(interval);
   }, []);
 
-  // 2. Play soothing synthetic chime in background using Web Audio API
+  // 2. Play soothing synthetic chime in background using Web Audio API (Disabled as per user request to only have spoken alert without ringtone sound)
   useEffect(() => {
-    try {
-      // Create audio context
-      const AudioCtxConstructor = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new AudioCtxConstructor();
-      audioCtxRef.current = ctx;
-
-      const playPulsingChime = () => {
-        if (ctx.state === "suspended") {
-          ctx.resume();
-        }
-
-        const osc = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-
-        // High premium warm chime melody notes alternatively
-        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-        const randomNote = notes[Math.floor(Math.random() * notes.length)];
-
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(randomNote, ctx.currentTime);
-
-        // Soft volume to not pierce user ears
-        gainNode.gain.setValueAtTime(0.08, ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
-
-        osc.connect(gainNode);
-        gainNode.connect(ctx.destination);
-
-        osc.start();
-        osc.stop(ctx.currentTime + 1.2);
-      };
-
-      // Trigger immediately and then periodic
-      playPulsingChime();
-      chimeIntervalRef.current = setInterval(playPulsingChime, 1800);
-    } catch (e) {
-      console.warn("Web Audio API not supported or allowed by sandbox context:", e);
-    }
-
+    // Chime disabled as per user request
     return () => {
       if (chimeIntervalRef.current) clearInterval(chimeIntervalRef.current);
       if (audioCtxRef.current) {

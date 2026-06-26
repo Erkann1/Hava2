@@ -48,6 +48,22 @@ const DEFAULT_ALARMS: AlarmSetting[] = [
   }
 ];
 
+const getServerUrl = () => {
+  const origin = window.location.origin;
+  if (origin.includes("localhost:3000") || origin.includes("127.0.0.1:3000")) {
+    return "";
+  }
+  if (
+    origin.startsWith("capacitor:") || 
+    origin.startsWith("file:") || 
+    origin.startsWith("http://localhost") || 
+    origin.startsWith("https://localhost")
+  ) {
+    return "https://ais-dev-5knb3upqyym366uefyuapq-948395534891.europe-west2.run.app";
+  }
+  return "";
+};
+
 export default function App() {
   // State
   const [alarms, setAlarms] = useState<AlarmSetting[]>(() => {
@@ -201,13 +217,13 @@ export default function App() {
       }
 
       // 1. Fetch live open-meteo weather of coordinates via server
-      const weatherRes = await fetch(`/api/weather?lat=${lat}&lon=${lon}&city=${encodeURIComponent(city)}`);
+      const weatherRes = await fetch(`${getServerUrl()}/api/weather?lat=${lat}&lon=${lon}&city=${encodeURIComponent(city)}`);
       if (!weatherRes.ok) throw new Error("Weather request failed");
       const weatherData: WeatherData = await weatherRes.json();
       setRingingWeather(weatherData);
 
       // 2. Request Gemini AI beautifully crafted spoken morning report script
-      const briefingRes = await fetch("/api/generate-briefing", {
+      const briefingRes = await fetch(`${getServerUrl()}/api/generate-briefing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -294,12 +310,12 @@ export default function App() {
       }
 
       // Fetch live open-meteo weather of coordinates via server
-      const weatherRes = await fetch(`/api/weather?lat=${lat}&lon=${lon}&city=${encodeURIComponent(city)}`);
+      const weatherRes = await fetch(`${getServerUrl()}/api/weather?lat=${lat}&lon=${lon}&city=${encodeURIComponent(city)}`);
       if (!weatherRes.ok) throw new Error("Live meteorological fetch failed");
       const weatherData: WeatherData = await weatherRes.json();
 
       // Trigger briefing generator
-      const briefingRes = await fetch("/api/generate-briefing", {
+      const briefingRes = await fetch(`${getServerUrl()}/api/generate-briefing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -343,7 +359,7 @@ export default function App() {
 
       // Geocode customized city coordinates
       if (formLocationMode === "custom") {
-        const geocodeRes = await fetch(`/api/geocode?city=${encodeURIComponent(formCustomCity)}`);
+        const geocodeRes = await fetch(`${getServerUrl()}/api/geocode?city=${encodeURIComponent(formCustomCity)}`);
         if (!geocodeRes.ok) {
           throw new Error("Girdiğiniz şehir ülkeler coğrafyasında doğrulanamadı.");
         }
@@ -490,11 +506,11 @@ export default function App() {
 
   return (
     <AndroidFrame>
-      <div className="flex-1 flex flex-col p-5 relative bg-[#050505] font-sans text-white select-none">
+      <div className="flex-1 flex flex-col p-4 relative bg-[#050505] font-sans text-white select-none h-full max-h-full overflow-hidden">
         
         {/* Dynamic Warning Notification Card with bold theme styling */}
         {statusMessage && (
-          <div className={`p-3.5 rounded-xl border mb-4 flex items-center gap-2.5 text-xs animate-fade-in z-20 ${
+          <div className={`p-2.5 rounded-xl border mb-3 flex items-center gap-2 text-xs animate-fade-in z-20 shrink-0 ${
             statusMessage.type === "success" 
               ? "bg-blue-500/10 border-blue-500/30 text-blue-400" 
               : statusMessage.type === "error"
@@ -502,61 +518,61 @@ export default function App() {
               : "bg-white/5 border-white/10 text-white/90"
           }`}>
             {statusMessage.type === "error" ? (
-              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-500" />
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
             ) : statusMessage.type === "success" ? (
-              <Check className="w-4 h-4 shrink-0 text-blue-400" />
+              <Check className="w-3.5 h-3.5 shrink-0 text-blue-400" />
             ) : (
-              <Clock className="w-4 h-4 shrink-0 text-blue-400" />
+              <Clock className="w-3.5 h-3.5 shrink-0 text-blue-400" />
             )}
-            <p className="font-bold uppercase tracking-tight text-[11px]">{statusMessage.text}</p>
+            <p className="font-bold uppercase tracking-tight text-[10px] leading-tight">{statusMessage.text}</p>
           </div>
         )}
 
-        {/* Dashboard Title & Quick Help Trigger with Stark theme */}
-        <div className="flex items-start justify-between mt-1 mb-4">
-          <div>
-            <span className="text-[10px] uppercase tracking-[0.25em] font-black text-blue-400 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-              AURA VOICE ENGINE
-            </span>
-            <h1 className="text-2xl font-black text-white tracking-tighter mt-1 leading-tight">
+        {/* Unified High-Density Dashboard Card (Title, Clock, Installation button) */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between shadow-inner mb-3 relative overflow-hidden shrink-0">
+          <div className="absolute -left-4 -top-6 text-[4.5rem] font-black opacity-[0.02] text-white leading-none tracking-tighter select-none pointer-events-none">
+            AURA
+          </div>
+          <div className="flex flex-col text-left relative z-10">
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] uppercase tracking-[0.2em] font-black text-blue-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                AURA VOICE
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsHelpOpen(true)}
+                className="px-2 py-0.5 rounded-full bg-white/10 hover:bg-white text-white hover:text-black text-[8px] font-black uppercase tracking-widest cursor-pointer transition-colors duration-150 border border-white/5"
+              >
+                Kurulum
+              </button>
+            </div>
+            <h1 className="text-lg font-black text-white tracking-tighter mt-1 leading-none uppercase">
               SAYISAL ALARM
             </h1>
-            <p className="text-[10px] font-mono uppercase opacity-40 mt-0.5 tracking-wider">
+            <p className="text-[9px] font-mono uppercase opacity-40 mt-1.5 tracking-wider">
               {getFormatTurkishDate()}
             </p>
           </div>
-
-          <button
-            onClick={() => setIsHelpOpen(true)}
-            className="p-1.5 px-3 rounded-full bg-white hover:bg-blue-500 hover:text-white text-black text-[10px] font-black uppercase tracking-tighter cursor-pointer transition-colors duration-150"
-          >
-            Kurulum
-          </button>
-        </div>
-
-        {/* Massive Dynamic Digital Clock Widget with 'AURA' watermark styled with bold layout */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-inner mb-4 relative overflow-hidden">
-          <div className="absolute -left-6 -top-8 text-[6rem] font-black opacity-[0.03] text-white leading-none tracking-tighter select-none">
-            AURA
+          <div className="flex flex-col items-end text-right relative z-10">
+            <span className="text-3xl font-black text-white font-sans tracking-tighter leading-none">
+              {currentTime.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+            </span>
+            <span className="text-[8px] text-blue-400 font-mono tracking-[0.15em] mt-1.5 uppercase font-black">
+              SİSTEM • {currentTime.getSeconds()}S
+            </span>
           </div>
-          <span className="text-5xl font-black text-white font-sans tracking-tighter leading-none relative z-10">
-            {currentTime.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
-          </span>
-          <span className="text-[10px] text-blue-400 font-mono tracking-[0.2em] mt-2.5 uppercase font-black relative z-10">
-            GERÇEK ZAMANLI SİSTEM • {currentTime.getSeconds()}s
-          </span>
         </div>
 
-        {/* Form Modal / Interactive configuration terminal */}
+        {/* Form Panel or Alarms List */}
         {isFormOpen ? (
           <form 
             onSubmit={handleSaveAlarm}
-            className="p-4 rounded-2xl bg-[#090909] border border-white/15 flex flex-col gap-3.5 animate-slide-up shadow-2xl relative z-20 mb-4"
+            className="p-3.5 rounded-2xl bg-[#090909] border border-white/15 flex flex-col gap-3 animate-slide-up shadow-2xl relative z-20 flex-1 min-h-0 overflow-y-auto custom-scroll"
           >
-            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2 shrink-0">
               <h2 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.15em]">
-                {editingAlarmId ? "ALARM DÜZENLEME TERMİNALİ" : "UPYAPI YAPILANDIRMA TERMİNALİ"}
+                {editingAlarmId ? "ALARM DÜZENLEME TERMİNALİ" : "YENİ ALARM TERMİNALİ"}
               </h2>
               <button 
                 type="button"
@@ -567,37 +583,37 @@ export default function App() {
               </button>
             </div>
 
-            {/* Time Configuration */}
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-white/50 block mb-1">
-                Zamanlayıcı Saati:
-              </label>
-              <input 
-                type="time" 
-                required
-                value={formTime}
-                onChange={(e) => setFormTime(e.target.value)}
-                className="w-full bg-[#050505] text-white border border-white/10 rounded-xl px-3 py-2 text-sm font-black focus:outline-none focus:border-blue-500 font-mono"
-              />
-            </div>
-
-            {/* Label Parameter */}
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-white/50 block mb-1">
-                Alarm Notu / Etiketi:
-              </label>
-              <input 
-                type="text" 
-                placeholder="Sabah Raporu, Kalkış Saati..."
-                value={formLabel}
-                onChange={(e) => setFormLabel(e.target.value)}
-                className="w-full bg-[#050505] text-sm text-slate-100 placeholder:text-white/20 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 font-medium"
-              />
+            {/* Time & Label side-by-side */}
+            <div className="grid grid-cols-3 gap-2.5 shrink-0">
+              <div className="col-span-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-white/50 block mb-1">
+                  Saat:
+                </label>
+                <input 
+                  type="time" 
+                  required
+                  value={formTime}
+                  onChange={(e) => setFormTime(e.target.value)}
+                  className="w-full bg-[#050505] text-white border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-black focus:outline-none focus:border-blue-500 font-mono"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="text-[9px] font-black uppercase tracking-widest text-white/50 block mb-1">
+                  Alarm Etiketi:
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Sabah Raporu..."
+                  value={formLabel}
+                  onChange={(e) => setFormLabel(e.target.value)}
+                  className="w-full bg-[#050505] text-xs text-slate-100 placeholder:text-white/20 border border-white/10 rounded-xl px-3 py-1.5 focus:outline-none focus:border-blue-500 font-medium"
+                />
+              </div>
             </div>
 
             {/* Repetitive Mode */}
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-white/50 block mb-1">
+            <div className="shrink-0">
+              <label className="text-[9px] font-black uppercase tracking-widest text-white/50 block mb-1">
                 Tekrar Eden Günler:
               </label>
               <div className="flex items-center gap-1 justify-between">
@@ -608,7 +624,7 @@ export default function App() {
                       type="button"
                       key={day}
                       onClick={() => handleDaySelect(idx)}
-                      className={`w-8 h-8 rounded-full border text-[10px] font-black flex items-center justify-center transition-all cursor-pointer ${
+                      className={`w-7.5 h-7.5 rounded-full border text-[9px] font-black flex items-center justify-center transition-all cursor-pointer ${
                         isSel 
                           ? "bg-blue-500 text-white border-blue-400 shadow-md shadow-blue-500/10" 
                           : "bg-[#050505] text-white/40 border-white/10 hover:border-white/30"
@@ -622,15 +638,15 @@ export default function App() {
             </div>
 
             {/* Location Selector */}
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-white/50 block mb-1">
+            <div className="shrink-0">
+              <label className="text-[9px] font-black uppercase tracking-widest text-white/50 block mb-1">
                 Konum Algılama:
               </label>
-              <div className="grid grid-cols-2 gap-2 bg-[#050505] rounded-xl p-1 border border-white/10">
+              <div className="grid grid-cols-2 gap-2 bg-[#050505] rounded-xl p-0.5 border border-white/10">
                 <button
                   type="button"
                   onClick={() => setFormLocationMode("current")}
-                  className={`py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase transition-all cursor-pointer ${
+                  className={`py-1 rounded-lg text-[9px] font-black tracking-wider uppercase transition-all cursor-pointer ${
                     formLocationMode === "current"
                       ? "bg-white text-black border border-transparent"
                       : "text-white/40 hover:text-white"
@@ -641,7 +657,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setFormLocationMode("custom")}
-                  className={`py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase transition-all cursor-pointer ${
+                  className={`py-1 rounded-lg text-[9px] font-black tracking-wider uppercase transition-all cursor-pointer ${
                     formLocationMode === "custom"
                       ? "bg-white text-black border border-transparent"
                       : "text-white/40 hover:text-white"
@@ -657,20 +673,20 @@ export default function App() {
                   value={formCustomCity}
                   onChange={(e) => setFormCustomCity(e.target.value)}
                   placeholder="Şehir örn: İstanbul, Ankara..."
-                  className="w-full mt-2 bg-[#050505] text-white border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-blue-500 font-semibold"
+                  className="w-full mt-1.5 bg-[#050505] text-white border border-white/10 rounded-xl px-3 py-1 text-xs focus:outline-none focus:border-blue-500 font-semibold"
                 />
               )}
             </div>
 
             {/* Personality Theme Selector */}
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-white/50 block mb-1">
+            <div className="shrink-0">
+              <label className="text-[9px] font-black uppercase tracking-widest text-white/50 block mb-1">
                 Yapay Zeka Anons Üslubu:
               </label>
               <select
                 value={formPersonality}
                 onChange={(e: any) => setFormPersonality(e.target.value)}
-                className="w-full bg-[#050505] text-white border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 font-bold uppercase tracking-tight"
+                className="w-full bg-[#050505] text-white border border-white/10 rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500 font-bold uppercase tracking-tight"
               >
                 <option value="standard">Samimi Klasik Akıllı Spiker</option>
                 <option value="poetic">Şiirsel & Romantik Uyanış</option>
@@ -681,9 +697,9 @@ export default function App() {
             </div>
 
             {/* Vocal Adjustments sliders */}
-            <div className="grid grid-cols-2 gap-3 bg-white/5 p-2.5 rounded-xl border border-white/10">
+            <div className="grid grid-cols-2 gap-2 bg-white/5 p-2 rounded-xl border border-white/10 shrink-0">
               <div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-white/40 block">
+                <span className="text-[8px] font-black uppercase tracking-wider text-white/40 block">
                   OKUMA HIZI ({formVoiceRate}x)
                 </span>
                 <input 
@@ -693,12 +709,12 @@ export default function App() {
                   step="0.1"
                   value={formVoiceRate}
                   onChange={(e) => setFormVoiceRate(parseFloat(e.target.value))}
-                  className="w-full mt-1.5 accent-blue-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none"
+                  className="w-full mt-1 accent-blue-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none"
                 />
               </div>
 
               <div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-white/40 block">
+                <span className="text-[8px] font-black uppercase tracking-wider text-white/40 block">
                   SES TONU ({formVoicePitch})
                 </span>
                 <input 
@@ -708,7 +724,7 @@ export default function App() {
                   step="0.1"
                   value={formVoicePitch}
                   onChange={(e) => setFormVoicePitch(parseFloat(e.target.value))}
-                  className="w-full mt-1.5 accent-blue-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none"
+                  className="w-full mt-1 accent-blue-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none"
                 />
               </div>
             </div>
@@ -716,113 +732,115 @@ export default function App() {
             <button
               type="submit"
               disabled={isGeocoding}
-              className="w-full py-3 bg-white hover:bg-blue-500 hover:text-white transition-colors disabled:opacity-50 text-black font-black text-xs rounded-xl cursor-pointer tracking-wider uppercase flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 bg-white hover:bg-blue-500 hover:text-white transition-colors disabled:opacity-50 text-black font-black text-xs rounded-xl cursor-pointer tracking-wider uppercase flex items-center justify-center gap-1.5 shrink-0 mt-auto"
             >
               {isGeocoding ? "KONUM DOĞRULANIYOR..." : (editingAlarmId ? "DEĞİŞİKLİKLERİ KAYDET" : "ALARM KUR VE KAYDET")}
             </button>
           </form>
         ) : (
-          /* Add Alarm master trigger button in white bold aesthetics */
-          <button
-            onClick={() => setIsFormOpen(true)}
-            className="w-full py-3.5 mb-4 rounded-xl bg-white text-black hover:bg-blue-500 hover:text-white font-black text-xs uppercase tracking-tighter border border-transparent transition-colors flex items-center justify-center gap-1.5 cursor-pointer leading-none shadow-md"
-          >
-            <Plus className="w-4 h-4 text-current stroke-[3px]" />
-            <span>YENİ SESLİ ALARM EKLE</span>
-          </button>
-        )}
+          <>
+            {/* Add Alarm master trigger button in white bold aesthetics */}
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="w-full py-3 mb-3.5 rounded-xl bg-white text-black hover:bg-blue-500 hover:text-white font-black text-xs uppercase tracking-tighter border border-transparent transition-colors flex items-center justify-center gap-1.5 cursor-pointer leading-none shadow-md shrink-0"
+            >
+              <Plus className="w-4 h-4 text-current stroke-[3px]" />
+              <span>YENİ SESLİ ALARM EKLE</span>
+            </button>
 
-        {/* Live Audio / TTS Text Preview Window */}
-        {isPreviewing && (
-          <div className="bg-[#090909] p-3.5 rounded-2xl border border-blue-500/25 mb-4 animate-fade-in relative shadow-md">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded px-1.5 py-0.5 font-bold tracking-widest uppercase flex items-center gap-1">
-                <Volume2 className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
-                DİNLETİ PARK ALANI
-              </span>
-              <button 
-                onClick={() => {
-                  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-                  setIsPreviewing(false);
-                  setPreviewText("");
-                }}
-                className="text-[10px] text-white/50 hover:text-white uppercase tracking-tighter font-black underline cursor-pointer"
-              >
-                GİZLE
-              </button>
-            </div>
-            
-            <p className="text-xs text-white/90 leading-relaxed max-h-24 overflow-y-auto bg-black p-2.5 rounded-xl text-left border border-white/5">
-              {previewText}
-            </p>
-          </div>
-        )}
-
-        {/* Main List of configured alarms */}
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex items-center gap-1.5 text-[10px] text-white/40 font-black tracking-[0.2em] uppercase mb-2.5">
-            <Clock className="w-3.5 h-3.5 text-blue-500" />
-            <span>YAPILANDIRILMIŞ ALARMLAR ({alarms.length})</span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto space-y-3.5 pr-0.5 custom-scroll">
-            {alarms.length === 0 ? (
-              <div className="py-12 px-4 rounded-2xl border border-white/5 bg-[#090909] text-center flex flex-col items-center justify-center">
-                <Clock className="w-8 h-8 text-white/20 mb-3" />
-                <p className="text-xs text-white font-bold uppercase tracking-tight">Kayıtlı Alarm Yok</p>
-                <p className="text-[10px] text-white/40 leading-normal mt-1 max-w-[200px] mx-auto">
-                  Üstteki ekleme butonu üzerinden ilk akıllı sesli alarm konfigürasyonunuzu saniyeler içinde kurun.
-                </p>
-              </div>
-            ) : (
-              alarms.map(alarm => (
-                <AlarmCard
-                  key={alarm.id}
-                  alarm={alarm}
-                  onToggle={handleToggleAlarm}
-                  onDelete={handleDeleteAlarm}
-                  onPreview={runLiveTestPreview}
-                  onEdit={handleEditAlarm}
-                />
-              ))
-            )}
-
-            {/* Historical Telemetry Logs Section */}
-            {logs.length > 0 && (
-              <div className="mt-8 pt-5 border-t border-white/10">
-                <div className="flex items-center justify-between text-[10px] text-white/45 font-black tracking-[0.2em] uppercase mb-3">
-                  <span className="flex items-center gap-1.5">
-                    <Activity className="w-3.5 h-3.5 text-blue-500" />
-                    BÜLTEN TETİKLEME GÜNLÜKLERİ
+            {/* Live Audio / TTS Text Preview Window */}
+            {isPreviewing && (
+              <div className="bg-[#090909] p-3 rounded-2xl border border-blue-500/25 mb-3.5 animate-fade-in relative shadow-md shrink-0">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[8px] bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded px-1.5 py-0.5 font-bold tracking-widest uppercase flex items-center gap-1">
+                    <Volume2 className="w-3 h-3 text-blue-500 animate-pulse" />
+                    DİNLETİ PARK ALANI
                   </span>
                   <button 
-                    onClick={() => setLogs([])}
-                    className="text-[9px] text-white/40 hover:text-rose-400 uppercase font-black cursor-pointer"
+                    onClick={() => {
+                      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+                      setIsPreviewing(false);
+                      setPreviewText("");
+                    }}
+                    className="text-[9px] text-white/50 hover:text-white uppercase tracking-tighter font-black underline cursor-pointer"
                   >
-                    TEMİZLE
+                    GİZLE
                   </button>
                 </div>
-
-                <div className="space-y-2 max-h-40 overflow-y-auto custom-scroll">
-                  {logs.map((log) => (
-                    <div key={log.id} className="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col gap-1.5 text-[10px] text-white/80">
-                      <div className="flex justify-between font-bold text-white uppercase tracking-tight">
-                        <span>{log.alarmLabel}</span>
-                        <span className="font-mono text-[9px] text-blue-400">{log.timestamp}</span>
-                      </div>
-                      <div className="text-[9px] text-blue-500 uppercase font-black">
-                        HAVA MODELİ: {log.weatherSummary}
-                      </div>
-                      <p className="bg-[#050505] p-2 rounded-lg text-[10px] text-white/60 font-sans line-clamp-2 leading-relaxed">
-                        {log.spokenText}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                
+                <p className="text-[11px] text-white/90 leading-relaxed max-h-20 overflow-y-auto bg-black p-2 rounded-xl text-left border border-white/5 custom-scroll">
+                  {previewText}
+                </p>
               </div>
             )}
-          </div>
-        </div>
+
+            {/* Main List of configured alarms */}
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex items-center gap-1.5 text-[9px] text-white/40 font-black tracking-[0.2em] uppercase mb-2 shrink-0">
+                <Clock className="w-3.5 h-3.5 text-blue-500" />
+                <span>YAPILANDIRILMIŞ ALARMLAR ({alarms.length})</span>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-3 pr-0.5 custom-scroll">
+                {alarms.length === 0 ? (
+                  <div className="py-8 px-4 rounded-2xl border border-white/5 bg-[#090909] text-center flex flex-col items-center justify-center">
+                    <Clock className="w-7 h-7 text-white/20 mb-2" />
+                    <p className="text-xs text-white font-bold uppercase tracking-tight">Kayıtlı Alarm Yok</p>
+                    <p className="text-[9px] text-white/40 leading-normal mt-1 max-w-[180px] mx-auto">
+                      Üstteki ekleme butonu üzerinden ilk akıllı sesli alarm konfigürasyonunuzu saniyeler içinde kurun.
+                    </p>
+                  </div>
+                ) : (
+                  alarms.map(alarm => (
+                    <AlarmCard
+                      key={alarm.id}
+                      alarm={alarm}
+                      onToggle={handleToggleAlarm}
+                      onDelete={handleDeleteAlarm}
+                      onPreview={runLiveTestPreview}
+                      onEdit={handleEditAlarm}
+                    />
+                  ))
+                )}
+
+                {/* Historical Telemetry Logs Section */}
+                {logs.length > 0 && (
+                  <div className="mt-6 pt-4 border-t border-white/10">
+                    <div className="flex items-center justify-between text-[9px] text-white/45 font-black tracking-[0.2em] uppercase mb-2">
+                      <span className="flex items-center gap-1.5">
+                        <Activity className="w-3.5 h-3.5 text-blue-500" />
+                        BÜLTEN TETİKLEME GÜNLÜKLERİ
+                      </span>
+                      <button 
+                        onClick={() => setLogs([])}
+                        className="text-[8px] text-white/40 hover:text-rose-400 uppercase font-black cursor-pointer"
+                      >
+                        TEMİZLE
+                      </button>
+                    </div>
+
+                    <div className="space-y-1.5 max-h-32 overflow-y-auto custom-scroll">
+                      {logs.map((log) => (
+                        <div key={log.id} className="p-2.5 bg-white/5 rounded-xl border border-white/10 flex flex-col gap-1 text-[9px] text-white/80">
+                          <div className="flex justify-between font-bold text-white uppercase tracking-tight">
+                            <span>{log.alarmLabel}</span>
+                            <span className="font-mono text-[8px] text-blue-400">{log.timestamp}</span>
+                          </div>
+                          <div className="text-[8px] text-blue-500 uppercase font-black">
+                            HAVA MODELİ: {log.weatherSummary}
+                          </div>
+                          <p className="bg-[#050505] p-2 rounded-lg text-[9px] text-white/60 font-sans line-clamp-2 leading-relaxed">
+                            {log.spokenText}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Overlay panels */}
         <HelpModal 

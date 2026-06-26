@@ -72,21 +72,19 @@ function generateProceduralBriefing(
   tempMax: number,
   personality: string
 ): string {
-  const intro = `Günaydın! Karşınızda akıllı sesli hava durumu asistanınız. Bugün ${city} şehrinde harika bir güne uyanıyorsunuz.`;
-  const dataBrief = `Şu anki sıcaklık ${Math.round(temp)} derece ve gökyüzünde ${condition} hakim. Bugün en düşük sıcaklık ${Math.round(tempMin)}, en yüksek ise ${Math.round(tempMax)} derece olacak. Nem oranı yüzde ${humidity}, rüzgar hızı ise saatte ${Math.round(windSpeed)} kilometre seviyesinde.`;
-
+  const roundedTemp = Math.round(temp);
   switch (personality) {
     case "poetic":
-      return `Günaydın canım kalplere! ${city} semalarında bugün gökyüzü sessizce şarkı söylüyor. ${condition} örtüsüyle kaplı göğün altında sıcaklığımız ${Math.round(temp)} derece. Rüzgarlar saatte ${Math.round(windSpeed)} kilometre hızında esip ruhumuzu okşayacak. Gününüz bir şiir gibi akıcı ve berrak geçsin!`;
+      return `Bugün gökyüzü sessizce ${condition} şarkısını mırıldanıyor ve hava tatlı bir ${roundedTemp} derece.`;
     case "humorous":
-      return `Hey, uyanma vakti! Yataktan düşmeden önce ${city} havasına bir göz atalım. Dışarısı şu an ${Math.round(temp)} derece. Yani ne çok sıcak, ne çok soğuk, tam battaniye altında hayal kurmalık! Nem yüzde ${humidity} civarında, saçlarınızı kabartmaya aday. Gökyüzü de ${condition} modunda takılıyor. Şemsiyenizi yanınıza alın ya da evde kalın, karar sizin!`;
+      return `Uyanma vakti! Dışarısı şu an ${condition} ve tam ${roundedTemp} derece, haberiniz olsun!`;
     case "energetic":
-      return `Mükemmel bir sabah! Hadi kalkın, bugün muhteşem bir enerjiyle dolup taşma günü! ${city} şu an tamı tamına ${Math.round(temp)} derece! ${condition} sizi durduramaz! Rüzgar saatte ${Math.round(windSpeed)} kilometreyle arkamızdan esiyor, hadi sınırları aşmaya! Harika, aktif ve başarılı bir gün geçirin!`;
+      return `Mükemmel bir gün başladı! Hava şu an ${condition} ve sıcaklık tamı tamına ${roundedTemp} derece!`;
     case "futuristic":
-      return `Sistem uyarısı: Siber-atmosferik rapor yükleniyor. ${city} bölgesel ana merkez koordinatlarında şu anki termal seviye ${Math.round(temp)} santigrat derece. Gökyüzü verisi: ${condition}. Nem oranı yüzde ${humidity} ve rüzgar vektörü saatte ${Math.round(windSpeed)} kilometre. Günlük optimizasyonunuz için kıyafet kalkanlarınızı bu değerlere göre kalibre etmeniz önerilir. İyi döngüler dileriz.`;
+      return `Atmosfer durumu: ${condition}. Termal seviye: ${roundedTemp} derece.`;
     case "standard":
     default:
-      return `${intro} ${dataBrief} Bu koşullara uygun kıyafetler seçmenizi önerir, huzurlu ve sağlıklı bir gün dileriz.`;
+      return `${city} için hava durumu şu an ${condition} ve sıcaklık ${roundedTemp} derece.`;
   }
 }
 
@@ -205,10 +203,6 @@ HAVA DURUMU VERİLERİ:
 - Bölge/Şehir: ${city}
 - Şasi/Şu anki Sıcaklık: ${temp}°C
 - Durum: ${condition}
-- Nem Seviyesi: %${humidity}
-- Rüzgar Hızı: ${windSpeed} km/sa
-- Günün En Düşük Sıcaklığı: ${tempMin}°C
-- Günün En Yüksek Sıcaklığı: ${tempMax}°C
 
 KİŞİLİK/TON:
 Seçilen Tarz: ${personaLabel}
@@ -219,10 +213,14 @@ Seçilen Tarz: ${personaLabel}
 - energetic: Şampiyon enerjisi, motive eden, "hadi yataktan kalkıp dünyayı kurtaralım" tadında canlandırıcı.
 - futuristic: Bir bilim kurgu uzay gemisi yapay zekası (Cyberpunk/Navigasyon bilgisayarı) tonunda rasyonalize edilmiş anons.
 
+ÇOK ÖNEMLİ KRİTİK KURAL:
+Yazacağın metin KESİNLİKLE çok kısa olmalı ve SADECE havanın durumunu (gökyüzü durumu: ${condition}) ve hava sıcaklığını (${temp}°C) içermelidir. 
+Nem oranı, rüzgar hızı, günün en düşük/en yüksek sıcaklığı, tavsiyeler, kıyafet önerileri gibi hiçbir ek detaydan veya yan bilgiden bahsetme. 
+Yalnızca hava durumunu ve sıcaklığı belirten tek bir kısa cümle (en fazla iki kısa cümle) üret.
+
 METİN KURALLARI:
 1. Sadece okunacak metni geri döndür. Ekstra açıklama, başlık, "işte metniniz:" gibi ifadeler KESİNLİKLE yazma.
 2. Yazı dili değil, konuşma dili akıcılığında olsun. Sayıların ya da derecelerin telaffuzunun tınısını düşün.
-3. Maksimum 3-4 cümle (seslendirmeyi yormayacak uzunlukta).
 `;
 
     const response = await ai.models.generateContent({
